@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Battery Health Report</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        /* --- EMBEDDED CSS --- */
+        body { background-color: #0f1219; color: #e0e6ed; font-family: 'Segoe UI', sans-serif; padding-bottom: 50px; }
+        
+        .navbar { background: rgba(255,255,255,0.05); border-bottom: 1px solid #333; backdrop-filter: blur(10px); }
+        .brand-text { color: #00d2ff; font-weight: bold; letter-spacing: 1px; }
+
+        .metric-card {
+            background: #1a1f2b;
+            border: 1px solid #2c3545;
+            border-radius: 15px;
+            padding: 25px;
+            height: 100%;
+            transition: transform 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+        .metric-card:hover { transform: translateY(-5px); border-color: #00d2ff; }
+        
+        .metric-value { font-size: 2.5rem; font-weight: 700; margin: 10px 0; }
+        .metric-label { color: #8b9bb4; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* Status Colors */
+        .text-success-custom { color: #00ff9d; }
+        .text-warning-custom { color: #ffbf00; }
+        .text-danger-custom { color: #ff4757; }
+        
+        /* Bar Indicator */
+        .progress-container { height: 6px; background: #333; border-radius: 3px; margin-top: 15px; }
+        .progress-fill { height: 100%; border-radius: 3px; transition: width 1.5s ease-out; width: 0%; }
+
+        .btn-download {
+            background-color: #00d2ff; color: #000; font-weight: bold; border: none; padding: 10px 30px; border-radius: 50px;
+        }
+        .btn-download:hover { background-color: #fff; box-shadow: 0 0 15px rgba(0, 210, 255, 0.5); }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg mb-5">
+        <div class="container">
+            <span class="navbar-brand brand-text">⚡ Battery AI Diagnostics</span>
+            <a href="/" class="btn btn-outline-secondary btn-sm">New Scan</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="row g-4 mb-4">
+            <div class="col-md-4">
+                <div class="metric-card text-center">
+                    <div class="metric-label">Health Score (SOH)</div>
+                    <div class="metric-value {{ res.css_class }}">{{ res.health_score }}%</div>
+                    <div class="progress-container">
+                        <div class="progress-fill" id="healthBar" style="background-color: {{ 'red' if res.health_score < 50 else '#00d2ff' }}"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="metric-card text-center">
+                    <div class="metric-label">Remaining Useful Life</div>
+                    <div class="metric-value text-white">{{ res.rul }} <span style="font-size:1rem; color:#888;">Cycles</span></div>
+                    <p class="small" style="color: #aaa;">Predicted by Random Forest</p>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="metric-card text-center">
+                    <div class="metric-label">Est. Repair Cost</div>
+                    <div class="metric-value text-warning-custom">INR {{ res.cost }}</div>
+                    <p class="small" style="color: #aaa;">Based on market rates</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-8">
+                <div class="metric-card">
+                    <h5 class="mb-3" style="color:#fff;">Diagnostic & Recommendation</h5>
+                    <div class="p-3 mb-3" style="background: rgba(255,255,255,0.05); border-radius: 10px;">
+                        <strong class="{{ res.css_class }}">{{ res.condition }} Condition</strong>
+                        <p class="mt-2 text-white">{{ res.recommendation }}</p>
+                    </div>
+                    <h6 class="mt-4" style="color: #ccc;">Input Parameter Summary:</h6>
+                    <ul class="list-group list-group-flush" style="font-size: 0.9rem;">
+                        <li class="list-group-item bg-transparent" style="color: #bbb;">Voltage: <span class="text-white float-end">{{ data.voltage }} V</span></li>
+                        <li class="list-group-item bg-transparent" style="color: #bbb;">Temperature: <span class="text-white float-end">{{ data.temperature }} °C</span></li>
+                        <li class="list-group-item bg-transparent" style="color: #bbb;">Current Load: <span class="text-white float-end">{{ data.current }} A</span></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="metric-card">
+                    <h5 class="mb-3 text-center" style="color:#fff;">Cycle Analysis</h5>
+                    <canvas id="cycleChart"></canvas>
+                    <div class="text-center mt-4">
+                        <a href="/download" class="btn btn-download">📄 Download PDF Report</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Animate the health bar on load
+        setTimeout(() => {
+            document.getElementById('healthBar').style.width = "{{ res.health_score }}%";
+        }, 300);
+
+        // Chart.js Configuration
+        const ctx = document.getElementById('cycleChart').getContext('2d');
+        const used = {{ data.cycle }};
+        const remaining = {{ res.rul }};
+
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Consumed', 'Remaining'],
+                datasets: [{
+                    data: [used, remaining],
+                    backgroundColor: ['#333', '#00d2ff'],
+                    borderWidth: 0,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                cutout: '75%',
+                plugins: {
+                    legend: { position: 'bottom', labels: { color: '#aaa' } }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

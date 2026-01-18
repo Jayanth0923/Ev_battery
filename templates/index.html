@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NASA Battery Diagnostics</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <style>
+        /* --- EMBEDDED CSS --- */
+        body {
+            background: radial-gradient(circle at center, #1b2735 0%, #090a0f 100%);
+            color: #fff;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        /* Glassmorphism Card */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            max-width: 500px;
+            width: 100%;
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        h1 { font-weight: 700; letter-spacing: 1px; color: #00d2ff; text-align: center; margin-bottom: 30px; }
+        label { color: #aaa; font-size: 0.9rem; margin-bottom: 5px; }
+
+        /* UPDATED: Input Field Styling */
+        .form-control {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid #444;
+            color: #fff !important; /* Ensure typed text is white */
+            border-radius: 10px;
+        }
+        /* UPDATED: Placeholder Text Styling */
+        .form-control::placeholder {
+            color: #ccc; /* Light gray for placeholder so it's visible */
+            opacity: 1;
+        }
+        .form-control:focus {
+            background: rgba(0, 0, 0, 0.5);
+            color: #fff;
+            border-color: #00d2ff;
+            box-shadow: 0 0 10px rgba(0, 210, 255, 0.2);
+        }
+
+        .btn-glow {
+            background: linear-gradient(45deg, #00d2ff, #3a7bd5);
+            border: none;
+            color: white;
+            padding: 12px;
+            font-weight: bold;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 20px;
+        }
+        .btn-glow:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 20px rgba(0, 210, 255, 0.6);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="glass-card">
+        <h1>🔋 AI Diagnostic</h1>
+        <p class="text-center text-muted mb-4">NASA PCoE Battery Dataset Model</p>
+        
+        <form action="/predict" method="POST" id="batteryForm">
+            <div class="mb-3">
+                <label>Voltage (V)</label>
+                <input type="number" step="any" class="form-control" name="voltage" placeholder="e.g. 3.8" required>
+            </div>
+            <div class="row">
+                <div class="col-6 mb-3">
+                    <label>Current (A)</label>
+                    <input type="number" step="any" class="form-control" name="current" placeholder="e.g. -1.5" required>
+                </div>
+                <div class="col-6 mb-3">
+                    <label>Temp (°C)</label>
+                    <input type="number" step="any" class="form-control" name="temperature" placeholder="e.g. 24.0" required>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label>Current Cycle Count</label>
+                <input type="number" step="any" class="form-control" name="cycle" placeholder="e.g. 150" required>
+            </div>
+
+            <button type="submit" class="btn-glow">Run Analysis</button>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('batteryForm').addEventListener('submit', function(e) {
+            const btn = document.querySelector('.btn-glow');
+            btn.innerHTML = 'Processing AI Model...';
+            btn.style.opacity = '0.7';
+        });
+    </script>
+</body>
+</html>
